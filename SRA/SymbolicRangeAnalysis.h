@@ -1,8 +1,8 @@
 #ifndef _SYMBOLICRANGEANALYSIS_H_
 #define _SYMBOLICRANGEANALYSIS_H_
 
-#include "SAGE/SAGEInterface.h"
 
+#include "SAGE/SAGEInterface.h"
 #include "Redefinition.h"
 
 #include "SAGE/SAGEExpr.h"

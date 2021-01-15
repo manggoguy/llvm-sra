@@ -1,9 +1,11 @@
 //===------------------------- Redefinition.cpp ---------------------------===//
 //===----------------------------------------------------------------------===//
 
+#include <llvm/InitializePasses.h>
 #define DEBUG_TYPE "redef"
 
 // Python.h should always be the first included file.
+#include "SAGE/Python/PythonInterface.h"
 #include "SAGE/Python/PythonInterface.h"
 
 #include "Redefinition.h"
@@ -40,21 +42,25 @@ static bool IsRedefinable(Value *V) {
 static PHINode *CreateNamedPhi(Value *V, Twine Prefix,
                                BasicBlock::iterator Position) {
   const auto Name = (V->hasName() ? Prefix + "." + V->getName() : Prefix).str();
-  return PHINode::Create(V->getType(), 1, Name, Position);
+  Instruction* inst = dyn_cast<Instruction> (Position);
+  return PHINode::Create(V->getType(), 1, Name, inst);
 }
 
 void Redefinition::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  //AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addRequired<DominanceFrontier>();
+  AU.addRequired<DominanceFrontierWrapperPass>();
+  //AU.addRequired<DominanceFrontier>();
   AU.addPreserved<SAGEInterface>();
   AU.addPreserved<PythonInterface>();
-  AU.addPreserved<LoopInfoPass>();
   AU.setPreservesCFG();
 }
 
 bool Redefinition::runOnFunction(Function &F) {
   DT_  = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  DF_  = &getAnalysis<DominanceFrontier>();
+  DominanceFrontierWrapperPass* DFP = &getAnalysis<DominanceFrontierWrapperPass>(F);
+  DF_  = &DFP->getDominanceFrontier();
 
   createSigmasInFunction(&F);
 
